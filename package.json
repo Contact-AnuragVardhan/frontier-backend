@@ -1,6 +1,6 @@
 {
-  "name": "frontier-policy-backend",
-  "version": "0.1.0",
+  "name": "ai-choice-backend",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "engines": {"node": ">=20"},

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { answerChatQuestion } from "../services/chatService.js";
 import { getKnowledgeStatus } from "../services/knowledgeService.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const chatRouter = Router();
 
@@ -26,8 +27,9 @@ function parseHistory(value) {
   });
 }
 
-chatRouter.post("/", async (req, res, next) => {
-  try {
+chatRouter.post(
+  "/",
+  asyncHandler(async (req, res) => {
     const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
 
     if (!message) {
@@ -45,16 +47,15 @@ chatRouter.post("/", async (req, res, next) => {
       return res.status(400).json({ error: error.message });
     }
 
-    return res.json(await answerChatQuestion(message, history));
-  } catch (error) {
-    return next(error);
-  }
-});
+    const answer = await answerChatQuestion(message, history);
+    return res.json(answer);
+  }),
+);
 
-chatRouter.get("/status", async (_req, res, next) => {
-  try {
-    return res.json(await getKnowledgeStatus());
-  } catch (error) {
-    return next(error);
-  }
-});
+chatRouter.get(
+  "/status",
+  asyncHandler(async (_req, res) => {
+    const status = await getKnowledgeStatus();
+    return res.json(status);
+  }),
+);

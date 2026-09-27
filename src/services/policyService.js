@@ -6,7 +6,7 @@ export async function getPolicies(filters = {}) {
     .from("policies")
     .select("*")
     .order("state_name", { ascending: true })
-    .order("title", { ascending: true });
+    .order("policy_identifier", { ascending: true });
 
   const state = filters.state?.trim();
   const category = filters.category?.trim();
@@ -17,8 +17,14 @@ export async function getPolicies(filters = {}) {
       ? query.eq("state_code", state.toUpperCase())
       : query.ilike("state_name", state);
   }
-  if (category && category.toLowerCase() !== "all") query = query.eq("category", category);
-  if (status && status.toLowerCase() !== "all") query = query.eq("status", status);
+
+  if (category && category.toLowerCase() !== "all") {
+    query = query.contains("categories", [category]);
+  }
+
+  if (status && status.toLowerCase() !== "all") {
+    query = query.eq("status", status);
+  }
 
   const { data, error } = await query;
   if (error) throw new Error(`Unable to load policies: ${error.message}`);
@@ -35,20 +41,28 @@ export async function getPolicyById(id) {
 }
 
 export async function getPolicyOptions() {
-  const { data, error } = await supabase.from("policies").select("state_code,state_name,category,status");
+  const { data, error } = await supabase
+    .from("policies")
+    .select("state_code,state_name,categories,status,policy_type");
+
   if (error) throw new Error(`Unable to load policy options: ${error.message}`);
 
   const statesMap = new Map();
   const categories = new Set();
   const statuses = new Set();
+  const policyTypes = new Set();
+
   for (const row of data || []) {
     statesMap.set(row.state_code, { code: row.state_code, name: row.state_name });
-    categories.add(row.category);
-    statuses.add(row.status);
+    for (const category of row.categories || []) categories.add(category);
+    if (row.status) statuses.add(row.status);
+    if (row.policy_type) policyTypes.add(row.policy_type);
   }
+
   return {
-    states: Array.from(statesMap.values()).sort((a,b) => a.name.localeCompare(b.name)),
+    states: Array.from(statesMap.values()).sort((a, b) => a.name.localeCompare(b.name)),
     categories: Array.from(categories).sort(),
     statuses: Array.from(statuses).sort(),
+    policyTypes: Array.from(policyTypes).sort(),
   };
 }

@@ -2,6 +2,12 @@ import { config } from "../config.js";
 import { createEmbeddings } from "../openai.js";
 import { supabase } from "../supabase.js";
 
+function toPublicBrandText(value, fallback = "AI Choice") {
+  return String(value || fallback)
+    .replace(/Frontier Education Project/gi, "AI Choice")
+    .replace(/Frontier/gi, "AI Choice");
+}
+
 function normalizeQueries(queries) {
   const seen = new Set();
   const normalized = [];
@@ -35,7 +41,7 @@ async function searchEmbedding(embedding) {
 
   if (error) {
     throw new Error(
-      `Unable to search Frontier knowledge: ${error.message}`,
+      `Unable to search AI Choice knowledge: ${error.message}`,
     );
   }
 
@@ -109,8 +115,7 @@ export async function retrieveKnowledgeForQueries(queries) {
 }
 
 export function citationLabelForMatch(match) {
-  const sourceTitle =
-    match.source_title || "Approved Frontier source";
+  const sourceTitle = toPublicBrandText(match.source_title, "Approved AI Choice source");
   const sourceKey = match.source_key || "unknown-source";
   const pageNumber = match.page_number ?? "unknown";
 
@@ -128,8 +133,7 @@ export function buildRetrievedContext(matches) {
 
   for (let index = 0; index < matches.length; index += 1) {
     const match = matches[index];
-    const sourceTitle =
-      match.source_title || "Approved Frontier source";
+    const sourceTitle = toPublicBrandText(match.source_title, "Approved AI Choice source");
     const sourceKey = match.source_key || "unknown-source";
     const pageNumber = match.page_number ?? "unknown";
     const citationLabel = citationLabelForMatch(match);
@@ -206,7 +210,7 @@ export function toPublicSources(
     seen.add(key);
 
     sources.push({
-      title: match.source_title,
+      title: toPublicBrandText(match.source_title, "AI Choice source"),
       pageNumber: match.page_number,
       sourceUrl: match.source_url,
       documentUrl: match.document_url,
@@ -240,7 +244,13 @@ export async function getKnowledgeStatus() {
     );
   }
 
-  const sources = data || [];
+  const sources = (data || []).map((source) => ({
+    ...source,
+    title: toPublicBrandText(source.title, "AI Choice source"),
+    publisher: source.publisher
+      ? toPublicBrandText(source.publisher, source.publisher)
+      : source.publisher,
+  }));
 
   return {
     ready:

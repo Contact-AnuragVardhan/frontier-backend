@@ -6,6 +6,11 @@ function requireEnv(name) {
   return value;
 }
 
+function optionalEnv(name) {
+  const value = process.env[name];
+  return value ? value.trim() : null;
+}
+
 function requireOneOf(names) {
   for (const name of names) {
     const value = process.env[name];
@@ -44,6 +49,51 @@ function numberInRange(name, fallback, min, max) {
   return value;
 }
 
+function booleanEnv(name, fallback) {
+  const raw = process.env[name];
+  if (raw === undefined || raw === null || raw === "") return fallback;
+
+  const normalized = String(raw).trim().toLowerCase();
+  if (["true", "1", "yes", "on"].includes(normalized)) return true;
+  if (["false", "0", "no", "off"].includes(normalized)) return false;
+
+  throw new Error(`${name} must be true or false.`);
+}
+
+
+function templateEnv(name, fallback) {
+  const raw = process.env[name];
+  if (raw === undefined || raw === null || raw === "") return fallback;
+
+  // This allows Render/.env values such as "Line 1\\nLine 2" to become a
+  // real multiline text template while still supporting true multiline values.
+  return raw
+    .replaceAll("\\r\\n", "\r\n")
+    .replaceAll("\\n", "\n")
+    .replaceAll("\\t", "\t");
+}
+
+function emailList(name, required = false) {
+  const raw = process.env[name];
+  if (!raw) {
+    if (required) throw new Error(`Missing required environment variable: ${name}`);
+    return [];
+  }
+
+  const values = raw
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  if (required && values.length === 0) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+
+  return values;
+}
+
+const emailNotificationsEnabled = booleanEnv("EMAIL_NOTIFICATIONS_ENABLED", true);
+
 export const config = {
   port: Number(process.env.PORT || 4000),
 
@@ -79,6 +129,46 @@ export const config = {
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean),
+
+  emailNotificationsEnabled,
+  resendApiKey: emailNotificationsEnabled ? requireEnv("RESEND_API_KEY") : optionalEnv("RESEND_API_KEY"),
+  emailFromAddress: emailNotificationsEnabled
+    ? requireEnv("EMAIL_FROM_ADDRESS")
+    : optionalEnv("EMAIL_FROM_ADDRESS"),
+  emailRequestTimeoutMs: positiveInteger("EMAIL_REQUEST_TIMEOUT_MS", 15000),
+
+  // Each form/screen has its own recipient environment variable so the destination
+  // can be changed independently without a code deployment.
+  contactFormToEmails: emailList("CONTACT_FORM_TO_EMAIL", emailNotificationsEnabled),
+  newsletterSignupToEmails: emailList("NEWSLETTER_SIGNUP_TO_EMAIL", emailNotificationsEnabled),
+
+  // Each form also has independent subject/text/HTML templates. Values from environment
+  // variables override these safe defaults. Dynamic values use {{placeholder}} syntax.
+  contactEmailSubjectTemplate: templateEnv(
+    "CONTACT_EMAIL_SUBJECT_TEMPLATE",
+    "[AI Choice] New {{inquiryType}} contact inquiry"
+  ),
+  contactEmailTextTemplate: templateEnv(
+    "CONTACT_EMAIL_TEXT_TEMPLATE",
+    "A new contact request was submitted on the AI Choice website.\n\nName: {{name}}\nEmail: {{email}}\nInquiry type: {{inquiryType}}\nSubmitted: {{submittedAt}}\nSubmission ID: {{submissionId}}\n\nMessage:\n{{message}}"
+  ),
+  contactEmailHtmlTemplate: templateEnv(
+    "CONTACT_EMAIL_HTML_TEMPLATE",
+    "<h2>New AI Choice contact inquiry</h2><table cellpadding=\"6\" cellspacing=\"0\" border=\"0\"><tr><td><strong>Name</strong></td><td>{{name}}</td></tr><tr><td><strong>Email</strong></td><td>{{email}}</td></tr><tr><td><strong>Inquiry type</strong></td><td>{{inquiryType}}</td></tr><tr><td><strong>Submitted</strong></td><td>{{submittedAt}}</td></tr><tr><td><strong>Submission ID</strong></td><td>{{submissionId}}</td></tr></table><h3>Message</h3><p style=\"white-space:pre-wrap\">{{message}}</p>"
+  ),
+
+  newsletterEmailSubjectTemplate: templateEnv(
+    "NEWSLETTER_EMAIL_SUBJECT_TEMPLATE",
+    "[AI Choice] New newsletter signup"
+  ),
+  newsletterEmailTextTemplate: templateEnv(
+    "NEWSLETTER_EMAIL_TEXT_TEMPLATE",
+    "A new visitor signed up for AI Choice Brief.\n\nEmail: {{email}}\nSubmitted: {{submittedAt}}\nSubmission ID: {{submissionId}}"
+  ),
+  newsletterEmailHtmlTemplate: templateEnv(
+    "NEWSLETTER_EMAIL_HTML_TEMPLATE",
+    "<h2>New AI Choice Brief signup</h2><p>A new visitor signed up for AI Choice Brief.</p><table cellpadding=\"6\" cellspacing=\"0\" border=\"0\"><tr><td><strong>Email</strong></td><td>{{email}}</td></tr><tr><td><strong>Submitted</strong></td><td>{{submittedAt}}</td></tr><tr><td><strong>Submission ID</strong></td><td>{{submissionId}}</td></tr></table>"
+  ),
 };
 
 if (config.openaiEmbeddingDimensions !== 1536) {
