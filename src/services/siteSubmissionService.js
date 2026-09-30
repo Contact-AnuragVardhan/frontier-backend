@@ -98,6 +98,26 @@ function contactTemplateValues({ id, name, email, inquiryType, message, submitte
   };
 }
 
+function parentChapterTemplateValues({
+  id,
+  fullName,
+  email,
+  cityState,
+  schoolDistrict,
+  mailingAddress,
+  submittedAt,
+}) {
+  return {
+    submissionId: id,
+    fullName,
+    email,
+    cityState,
+    schoolDistrict,
+    mailingAddress,
+    submittedAt,
+  };
+}
+
 export async function createNewsletterSubmission(emailValue) {
   const email = normalizeEmail(emailValue);
   if (!email || email.length > 254 || !validateEmail(email)) {
@@ -179,6 +199,74 @@ export async function createContactSubmission(input = {}) {
     replyTo: email,
     text: renderEmailTemplate(config.contactEmailTextTemplate, values),
     html: renderEmailTemplate(config.contactEmailHtmlTemplate, values, { html: true }),
+  });
+
+  return { id };
+}
+
+export async function createParentChapterSubmission(input = {}) {
+  const fullName = String(input.fullName || "").trim();
+  const email = normalizeEmail(input.email);
+  const cityState = String(input.cityState || "").trim();
+  const schoolDistrict = String(input.schoolDistrict || "").trim();
+  const mailingAddress = String(input.mailingAddress || "").trim();
+
+  if (!fullName || fullName.length > 120) {
+    const error = new Error("Full name is required and must be 120 characters or fewer.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!email || email.length > 254 || !validateEmail(email)) {
+    const error = new Error("A valid email address is required.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!cityState || cityState.length > 160) {
+    const error = new Error("City and state are required and must be 160 characters or fewer.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!schoolDistrict || schoolDistrict.length > 200) {
+    const error = new Error("School or school district is required and must be 200 characters or fewer.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!mailingAddress || mailingAddress.length > 500) {
+    const error = new Error("Mailing address is required and must be 500 characters or fewer.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const id = await insertSubmission({
+    submission_type: "parent_chapter",
+    name: fullName,
+    email,
+    city_state: cityState,
+    school_district: schoolDistrict,
+    mailing_address: mailingAddress,
+  });
+
+  const submittedAt = new Date().toISOString();
+  const values = parentChapterTemplateValues({
+    id,
+    fullName,
+    email,
+    cityState,
+    schoolDistrict,
+    mailingAddress,
+    submittedAt,
+  });
+
+  await deliverSubmissionNotification(id, {
+    to: config.parentChapterToEmails,
+    subject: renderEmailSubject(config.parentChapterEmailSubjectTemplate, values),
+    replyTo: email,
+    text: renderEmailTemplate(config.parentChapterEmailTextTemplate, values),
+    html: renderEmailTemplate(config.parentChapterEmailHtmlTemplate, values, { html: true }),
   });
 
   return { id };

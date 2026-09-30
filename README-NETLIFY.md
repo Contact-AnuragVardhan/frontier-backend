@@ -92,6 +92,7 @@ The existing public routes remain unchanged:
 - `GET /api/chat/status`
 - `POST /api/site/contact`
 - `POST /api/site/newsletter`
+- `POST /api/site/parent-chapter`
 
 ## Email setup
 
@@ -102,3 +103,16 @@ EMAIL_NOTIFICATIONS_ENABLED=false
 ```
 
 Then enable email later after `RESEND_API_KEY`, `EMAIL_FROM_ADDRESS`, and recipient variables are configured.
+
+## Parent Chapter form setup
+
+Before enabling the Parent Chapter form in production:
+
+1. Run `sql/05_parent_chapter_submission.sql` in Supabase. This extends the existing `site_submissions` table without changing existing Contact/newsletter rows.
+2. Add this backend-only Netlify environment variable:
+
+```text
+PARENT_CHAPTER_TO_EMAIL=juliabutch23@gmail.com
+```
+
+Optional `PARENT_CHAPTER_EMAIL_*` environment variables can override the built-in subject/text/HTML templates documented in `.env.example`. Do not expose the recipient through a `VITE_` variable.

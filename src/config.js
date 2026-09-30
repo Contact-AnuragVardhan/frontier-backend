@@ -141,6 +141,7 @@ export const config = {
   // can be changed independently without a code deployment.
   contactFormToEmails: emailList("CONTACT_FORM_TO_EMAIL", emailNotificationsEnabled),
   newsletterSignupToEmails: emailList("NEWSLETTER_SIGNUP_TO_EMAIL", emailNotificationsEnabled),
+  parentChapterToEmails: emailList("PARENT_CHAPTER_TO_EMAIL", emailNotificationsEnabled),
 
   // Each form also has independent subject/text/HTML templates. Values from environment
   // variables override these safe defaults. Dynamic values use {{placeholder}} syntax.
@@ -155,6 +156,19 @@ export const config = {
   contactEmailHtmlTemplate: templateEnv(
     "CONTACT_EMAIL_HTML_TEMPLATE",
     "<h2>New AI Choice contact inquiry</h2><table cellpadding=\"6\" cellspacing=\"0\" border=\"0\"><tr><td><strong>Name</strong></td><td>{{name}}</td></tr><tr><td><strong>Email</strong></td><td>{{email}}</td></tr><tr><td><strong>Inquiry type</strong></td><td>{{inquiryType}}</td></tr><tr><td><strong>Submitted</strong></td><td>{{submittedAt}}</td></tr><tr><td><strong>Submission ID</strong></td><td>{{submissionId}}</td></tr></table><h3>Message</h3><p style=\"white-space:pre-wrap\">{{message}}</p>"
+  ),
+
+  parentChapterEmailSubjectTemplate: templateEnv(
+    "PARENT_CHAPTER_EMAIL_SUBJECT_TEMPLATE",
+    "[AI Choice] New Parent Chapter Request"
+  ),
+  parentChapterEmailTextTemplate: templateEnv(
+    "PARENT_CHAPTER_EMAIL_TEXT_TEMPLATE",
+    "New Parent Chapter Request\n\nFull name: {{fullName}}\nEmail: {{email}}\nCity and state: {{cityState}}\nSchool or school district: {{schoolDistrict}}\nMailing address: {{mailingAddress}}\nSubmitted: {{submittedAt}}\nSubmission ID: {{submissionId}}"
+  ),
+  parentChapterEmailHtmlTemplate: templateEnv(
+    "PARENT_CHAPTER_EMAIL_HTML_TEMPLATE",
+    "<h2>New Parent Chapter Request</h2><table cellpadding=\"6\" cellspacing=\"0\" border=\"0\"><tr><td><strong>Full name</strong></td><td>{{fullName}}</td></tr><tr><td><strong>Email</strong></td><td>{{email}}</td></tr><tr><td><strong>City and state</strong></td><td>{{cityState}}</td></tr><tr><td><strong>School or school district</strong></td><td>{{schoolDistrict}}</td></tr><tr><td><strong>Mailing address</strong></td><td style=\"white-space:pre-wrap\">{{mailingAddress}}</td></tr><tr><td><strong>Submitted</strong></td><td>{{submittedAt}}</td></tr><tr><td><strong>Submission ID</strong></td><td>{{submissionId}}</td></tr></table>"
   ),
 
   newsletterEmailSubjectTemplate: templateEnv(
