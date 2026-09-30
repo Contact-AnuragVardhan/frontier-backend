@@ -1,13 +1,6 @@
+npm install
 npm run dev
 
-npm run netlify:dev
-
-npm run build
-
-npx netlify env:import .env
-
-npx netlify env:list
-
-npm run deploy:preview
-
-npm run deploy
+# Production / Render
+npm ci
+npm start
