@@ -58,7 +58,7 @@ create table if not exists public.policies (
     check (policy_type in ('Bill','Law','Regulation','Guidance','Other')),
 
   constraint policies_category_check
-    check (category in ('AI Use','Student Privacy','Parental Consent','AI Literacy','School Procurement')),
+    check (category in ('AI Use','Student Privacy','Parental Consent','AI Literacy','School Procurement','Universal School Choice')),
 
   constraint policies_categories_nonempty_check
     check (cardinality(categories) > 0),
@@ -70,7 +70,8 @@ create table if not exists public.policies (
         'Student Privacy',
         'Parental Consent',
         'AI Literacy',
-        'School Procurement'
+        'School Procurement',
+        'Universal School Choice'
       ]::text[]
     ),
 
