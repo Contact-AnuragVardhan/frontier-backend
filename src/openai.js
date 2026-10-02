@@ -347,9 +347,12 @@ Return ONLY valid JSON in this exact shape:
     const queries = needsKnowledge
       ? uniqueStrings(
           [
+            // Always preserve the exact current user question as the primary
+            // retrieval query. Planner rewrites are useful supplements, but
+            // they must not crowd out the wording that the user actually sent.
+            question,
             standaloneQuestion,
             ...(Array.isArray(parsed?.queries) ? parsed.queries : []),
-            question,
           ],
           config.retrievalQueryCount,
         )
